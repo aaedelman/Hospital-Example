@@ -1,0 +1,68 @@
+<html>
+
+<head>
+    <!-- Contour, for diagrams like Charts -->
+    <link rel="stylesheet" href="//forio.com/tools/contour/contour.min.css">
+    <script src="//d3js.org/d3.v3.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/lodash.js/2.4.1/lodash.js"></script>
+    <script src="//forio.com/tools/contour/contour.js"></script>
+
+    <!-- for Flow.js -->
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+    <script src="//forio.com/tools/js-libs/2.5.0/epicenter.min.js"></script>
+    <script src="//forio.com/tools/js-libs/flow/latest/flow.js"></script>
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+
+
+
+</head>
+
+<body data-f-model="WaiverSlotsClass.vmf">
+    <!--Displays values from Model-->
+    <p>The hospital capacity is <span data-f-bind="Openings|#,##0"></span></p>
+    <p>Total Children: <span data-f-bind="Total Children|#,##0"></span></p>
+    <p>New Children Enrolled: <span data-f-bind="New Children Enrolled|#,##0"></span></p>
+
+    <!--Buttons to Run/Reset Model-->
+    <button data-f-on-click="step(5)" id="forecast" class="btn btn-primary">Simulate</button>
+    <button data-f-on-click="reset|start_game" class="btn btn-primary">Reset</button>
+
+    <br>
+    <div class="totalPopulationChart"></div>
+
+    <script>
+        Flow.initialize();
+
+        var totalPopulationChart = new Contour({
+                el: '.totalPopulationChart',
+                xAxis: {
+                    title: 'Time(months)'
+                },
+                yAxis: {
+                    title: 'Number of Children'
+                },
+                legend: {
+                    vAlign: 'top',
+                    hAlign: 'right'
+                }
+            })
+            .cartesian()
+            .line()
+            .legend()
+            .render();
+
+        Flow.channel.variables.subscribe('Openings',
+            function(data) {
+                var composedData = [{
+                    name: 'Openings of Children',
+                    data: data.Openings
+                }];
+                totalPopulationChart.setData(composedData);
+                totalPopulationChart.render();
+            });
+    </script>
+</body>
+
+</html>
