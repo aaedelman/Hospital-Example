@@ -21,24 +21,27 @@
 
 <body data-f-model="WaiverSlotsClass.vmf">
     <!--Displays values from Model-->
-    <p>The hospital capacity is <span data-f-bind="Openings|#,##0"></span></p>
+    <p>The hospital has <span data-f-bind="Openings|#,##0"></span>openings.</p>
     <p>Total Children: <span data-f-bind="Total Children|#,##0"></span></p>
     <p>New Children Enrolled: <span data-f-bind="New Children Enrolled|#,##0"></span></p>
+    <p>Capacity of hospital: <input type="text" data-f-bind="Capacity"></p>
 
     <!--Buttons to Run/Reset Model-->
     <button data-f-on-click="step(5)" id="forecast" class="btn btn-primary">Simulate</button>
     <button data-f-on-click="reset|start_game" class="btn btn-primary">Reset</button>
 
     <br>
-    <div class="totalPopulationChart"></div>
+    <div class="totalPopulationChart"  style="width:70%; height:25%;"></div>
 
     <script>
         Flow.initialize();
-
+        var chartOpenings = [];
+        var chartTotPop = [];
         var totalPopulationChart = new Contour({
                 el: '.totalPopulationChart',
                 xAxis: {
-                    title: 'Time(months)'
+                    title: 'Time(months)',
+                    max: 19
                 },
                 yAxis: {
                     title: 'Number of Children'
@@ -53,15 +56,37 @@
             .legend()
             .render();
 
-        Flow.channel.variables.subscribe('Openings',
+        Flow.channel.variables.subscribe(['Openings','Time','Total Children'],
             function(data) {
-                var composedData = [{
-                    name: 'Openings of Children',
-                    data: data.Openings
-                }];
-                totalPopulationChart.setData(composedData);
+                var lenData = chartOpenings.length;
+                var lenTime = data.Time.length;
+                if(lenTime<lenData) {
+                    chartOpenings = [];
+                    chartTotPop = [];
+                    lenData = chartOpenings.length;
+                }
+                for(var i = lenData - 1; i<data.Time.length; i++) {
+                    var composedOpeningsData = {
+                    x: data.Time[i],
+                    y: data.Openings[i]
+                    };
+                    chartOpenings.push(composedOpeningsData);
+                    var composedTotPopData = {
+                    x: data.Time[i],
+                    y: data['Total Children'][i]
+                    };
+                    chartTotPop.push(composedTotPopData);
+                }
+                totalPopulationChart.setData([{
+                    name: 'Openings for Children',
+                    data: chartOpenings
+                    },
+                    {
+                        name: 'Total Children',
+                        data: chartTotPop
+                    }]);
                 totalPopulationChart.render();
-            });
+            }, {batch : true});
     </script>
 </body>
 
