@@ -19,32 +19,44 @@
 
 </head>
 
-<body data-f-model="WaiverSlotsClass.vmf">
+<body data-f-model="WaiverSlotsClassGaming.vmf">
     <!--Displays values from Model-->
-    <p>The hospital has <span data-f-bind="Openings|#,##0"></span>openings.</p>
+    <p>Hospital Openings: <span data-f-bind="Openings|#,##0"></span></p>
     <p>Total Children: <span data-f-bind="Total Children|#,##0"></span></p>
     <p>New Children Enrolled: <span data-f-bind="New Children Enrolled|#,##0"></span></p>
-    <p>Capacity of hospital: <input type="text" data-f-bind="Capacity"></p>
+    <p>Capacity of hospital: <span data-f-bind="Capacity|#,##0"></p>
+    <p>Time in Progream for Low Need Children: 
+        <span data-f-bind="Time in Program for Lower Need Children Gaming"></span>
+        <input type="range" data-f-bind="Time in Program for Lower Need Children Gaming" min="1" max="12" step="0.5">
+    </p>
+    <p>Time in Progream for High Need Children:
+        <span data-f-bind="Time in Program for High Need Children Gaming"></span>
+        <input type="range" data-f-bind="Time in Program for High Need Children Gaming" min="1" max="10" step="0.5">
+    </p>
 
     <!--Buttons to Run/Reset Model-->
     <button data-f-on-click="step(5)" id="forecast" class="btn btn-primary">Simulate</button>
     <button data-f-on-click="reset|start_game" class="btn btn-primary">Reset</button>
 
     <br>
-    <div class="totalPopulationChart"  style="width:70%; height:25%;"></div>
+    <div class="totalPopulationChart" style="width:60%; height:30%;"></div>
+    <br>
+    <div class="fractionChildrenChart" style="width:60%; height:30%;"></div>
 
     <script>
         Flow.initialize();
         var chartOpenings = [];
         var chartTotPop = [];
+        var chartFractionHigh = [];
+        var chartFractionLow = [];
         var totalPopulationChart = new Contour({
                 el: '.totalPopulationChart',
                 xAxis: {
-                    title: 'Time(months)',
-                    max: 19
+                    title: 'Time(months)'
                 },
                 yAxis: {
                     title: 'Number of Children'
+
                 },
                 legend: {
                     vAlign: 'top',
@@ -56,37 +68,85 @@
             .legend()
             .render();
 
-        Flow.channel.variables.subscribe(['Openings','Time','Total Children'],
+        var fractionChildrenChart = new Contour({
+                el: '.fractionChildrenChart',
+                xAxis: {
+                    title: 'Time(months)'
+                },
+                yAxis: {
+                    title: 'Fraction of Children',
+                    labels: {
+                        format: '%'
+                    }
+                },
+                legend: {
+                    vAlign: 'top',
+                    hAlign: 'right'
+                }
+            })
+            .cartesian()
+            .line()
+            .legend()
+            .render();
+
+        Flow.channel.variables.subscribe(['Openings', 'Time', 'Total Children', 'Fraction of Higher Need Children', 'Fraction of Lower Need Children'],
             function(data) {
                 var lenData = chartOpenings.length;
                 var lenTime = data.Time.length;
-                if(lenTime<lenData) {
+                if (lenTime < lenData) {
                     chartOpenings = [];
                     chartTotPop = [];
+                    chartFractionHigh = [];
+                    chartFractionLow = [];
                     lenData = chartOpenings.length;
                 }
-                for(var i = lenData - 1; i<data.Time.length; i++) {
+                for (var i = lenData - 1; i < data.Time.length; i++) {
                     var composedOpeningsData = {
-                    x: data.Time[i],
-                    y: data.Openings[i]
+                        x: data.Time[i],
+                        y: data.Openings[i]
                     };
                     chartOpenings.push(composedOpeningsData);
                     var composedTotPopData = {
-                    x: data.Time[i],
-                    y: data['Total Children'][i]
+                        x: data.Time[i],
+                        y: data['Total Children'][i]
                     };
                     chartTotPop.push(composedTotPopData);
+                    var composedFracHighData = {
+                        x: data.Time[i],
+                        y: data['Fraction of Higher Need Children'][i]
+                    };
+                    chartFractionHigh.push(composedFracHighData);
+                    var composedFracLowData = {
+                        x: data.Time[i],
+                        y: data['Fraction of Lower Need Children'][i]
+                    };
+                    chartFractionLow.push(composedFracLowData);
                 }
+
                 totalPopulationChart.setData([{
-                    name: 'Openings for Children',
-                    data: chartOpenings
+                        name: 'Openings for Children',
+                        data: chartOpenings
                     },
                     {
                         name: 'Total Children',
                         data: chartTotPop
-                    }]);
+                    }
+                ]);
                 totalPopulationChart.render();
-            }, {batch : true});
+
+                fractionChildrenChart.setData([{
+                        name: 'High Need Children',
+                        data: chartFractionHigh
+                    },
+                    {
+                        name: 'Low Need Children',
+                        data: chartFractionLow
+                    }
+                ]);
+                fractionChildrenChart.render();
+            }, {
+                batch: true
+            });
     </script>
 </body>
 
